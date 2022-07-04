@@ -1,5 +1,8 @@
 file(REMOVE_RECURSE
+  "CMakeFiles/Project.dir/ecb_main.cpp.o"
+  "CMakeFiles/Project.dir/ecb_main.cpp.o.d"
   "CMakeFiles/Project.dir/main.cpp.o"
+  "CMakeFiles/Project.dir/main.cpp.o.d"
   "Project"
   "Project.pdb"
 )
