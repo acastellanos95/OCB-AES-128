@@ -1,7 +1,6 @@
-cmake_minimum_required(VERSION 3.16)
-project(Project)
+cmake_minimum_required(VERSION 3.22)
+project(OCB_AES_128 C)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_FLAGS "-march=native")
-
-add_executable(Project main.cpp aes_lib.h ecb_main.cpp)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_C_FLAGS "-march=native")
+add_executable(OCB_AES_128 main.c)

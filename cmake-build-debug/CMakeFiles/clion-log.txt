@@ -1,4 +1,4 @@
-/snap/clion/198/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -G "CodeBlocks - Unix Makefiles" -S /home/andre/Documents/GitHub/OCB-AES-128 -B /home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug
+/snap/clion/198/bin/cmake/linux/bin/cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_MAKE_PROGRAM=/snap/clion/198/bin/ninja/linux/ninja -G Ninja -S /home/andre/Documents/GitHub/OCB-AES-128 -B /home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug
 -- Configuring done
 -- Generating done
 -- Build files have been written to: /home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug

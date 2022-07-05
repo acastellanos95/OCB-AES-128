@@ -1,1 +1,0 @@
-/usr/bin/c++ -march=native -g CMakeFiles/Project.dir/main.cpp.o CMakeFiles/Project.dir/ecb_main.cpp.o -o Project 
