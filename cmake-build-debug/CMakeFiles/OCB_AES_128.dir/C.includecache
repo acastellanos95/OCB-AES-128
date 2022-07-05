@@ -1,0 +1,16 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/mnt/c/Users/andre/Documents/GitHub/OCB-AES-128/main.c
+stdint.h
+-
+stdio.h
+-
+wmmintrin.h
+-
+
