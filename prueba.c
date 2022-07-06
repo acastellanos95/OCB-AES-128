@@ -1,4 +1,7 @@
 //
+// Created by andre on 7/5/22.
+//
+//
 // Created by andre on 7/3/22.
 //
 #include <stdint.h>
@@ -10,8 +13,8 @@
 # define ALIGN32 __attribute__ ( (aligned (32)))
 
 typedef struct KEY_SCHEDULE {
-    ALIGN16 unsigned char KEY[16 * 15];
-    unsigned int nr;
+  ALIGN16 unsigned char KEY[16 * 15];
+  unsigned int nr;
 } AES_KEY;
 
 __m128i AES_128_ASSIST(__m128i temp1, __m128i temp2) {
@@ -194,118 +197,23 @@ int main() {
   key2.nr = 2;
   AES_set_decrypt_key_Two_Rounds(CIPHER_KEY2, &decrypt_key2);
 
-  /* ------------------------------------ Initializing L ------------------------------------ */
-  // Initialize L with nonce
-  __m128i L = _mm_loadu_si128((__m128i *) NONCE);
-  // normal cipher nonce (10 rounds)
-  L = _mm_xor_si128(L, ((__m128i *) key1.KEY)[0]);
-  int j;
-  for (j = 1; j < 10; j++) {
-    L = _mm_aesenc_si128(L, ((__m128i *) key1.KEY)[j]);
-  }
-  L = _mm_aesenclast_si128(L, ((__m128i *) key1.KEY)[j]);
-
-  /* ------------------------------------ Hashing ------------------------------------ */
-  // Assuming complete blocks only
-  int complete_blocks = (length_associated_data_in_bytes - length_associated_data_in_bytes % 16) / 16;
+  int complete_blocks = (length_plaintext_in_bytes - length_plaintext_in_bytes % 16) / 16;
   int indexBlock;
-  int ctr = 1;
-  __m128i S = _mm_set_epi32(0, 0, 0, 0);
-  for (indexBlock = 0; indexBlock < complete_blocks; indexBlock++) {
-    // Load A_i 16 * 16 bits of A
-    __m128i A_i, U_i, V_i;
-    A_i = _mm_loadu_si128(&((__m128i *) ASSOCIATEDDATA)[indexBlock]);
-    // Create alpha and delta5 with key 2
-    __m128i alpha, delta5;
-    alpha = _mm_set_epi32(ctr, ctr, ctr, ctr);
-    alpha = _mm_xor_si128(alpha, L);
-    // cipher alpha (2 rounds)
-    alpha = _mm_xor_si128(alpha, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      alpha = _mm_aesenc_si128(alpha, ((__m128i *) key2.KEY)[j]);
-    }
-    delta5 = alpha;
-    ctr += 5;
-
-    // Calculate U_i
-    U_i = _mm_xor_si128(A_i, delta5);
-
-    // Cipher U_i with two rounds AES. Calculate V_i
-    V_i = _mm_xor_si128(U_i, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      V_i = _mm_aesenc_si128(V_i, ((__m128i *) key2.KEY)[j]);
-    }
-
-    // Calculate S
-    S = _mm_xor_si128(S, V_i);
-  }
-
-  /* ------------------------------------ Encryption ------------------------------------ */
-  // Assuming complete blocks only
-  complete_blocks = (length_plaintext_in_bytes - length_plaintext_in_bytes % 16) / 16;
-  ctr = 1;
-  __m128i M_xor = _mm_set_epi32(0, 0, 0, 0);
   for (indexBlock = 0; indexBlock < complete_blocks; indexBlock++) {
     // Load M_i 16 * 16 bits of M
-    __m128i M_i, X_i, Y_i, C_i;
+    __m128i M_i, C_i;
     M_i = _mm_loadu_si128(&((__m128i *) PLAINTEXT)[indexBlock]);
 
-    // Create alpha and delta1_i with key 2
-    __m128i alpha, delta1;
-    alpha = _mm_set_epi32(ctr, ctr, ctr, ctr);
-    alpha = _mm_xor_si128(alpha, L);
-    // cipher alpha (2 rounds)
-    alpha = _mm_xor_si128(alpha, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      alpha = _mm_aesenc_si128(alpha, ((__m128i *) key2.KEY)[j]);
-    }
-    delta1 = alpha;
-    ctr++;
-
-    // Calculate M_xor
-    M_xor = _mm_xor_si128(M_xor, M_i);
-
-    // Calculate X_i
-    X_i = _mm_xor_si128(M_i, delta1);
-
     // Cipher X_i to Y_i
-    Y_i = _mm_xor_si128(X_i, ((__m128i *) key1.KEY)[0]);
+    C_i = _mm_xor_si128(M_i, ((__m128i *) key1.KEY)[0]);
+    int j;
     for (j = 1; j < 10; j++) {
-      Y_i = _mm_aesenc_si128(Y_i, ((__m128i *) key1.KEY)[j]);
+      C_i = _mm_aesenc_si128(C_i, ((__m128i *) key1.KEY)[j]);
     }
-    Y_i = _mm_aesenclast_si128(Y_i, ((__m128i *) key1.KEY)[j]);
+    C_i = _mm_aesenclast_si128(C_i, ((__m128i *) key1.KEY)[j]);
 
-    // Calculate C_i
-    C_i = _mm_xor_si128(Y_i, delta1);
     _mm_storeu_si128(&((__m128i*)CIPHERTEXT)[indexBlock],C_i);
   }
-
-  // Create alpha and delta3_l with key 2
-  __m128i alpha, delta3_l;
-  alpha = _mm_set_epi32(3*complete_blocks + 1, 3*complete_blocks + 1, 3*complete_blocks + 1, 3*complete_blocks + 1);
-  alpha = _mm_xor_si128(alpha, L);
-  // cipher alpha (2 rounds)
-  alpha = _mm_xor_si128(alpha, ((__m128i *) key2.KEY)[0]);
-  for (j = 1; j <= 2; j++) {
-    alpha = _mm_aesenc_si128(alpha, ((__m128i *) key2.KEY)[j]);
-  }
-  delta3_l = alpha;
-
-  // Calculate X_xor
-  __m128i X_xor = _mm_xor_si128(M_xor, delta3_l);
-
-  // Calculate Y_xor ciphering X_xor (two rounds)
-  __m128i Y_xor = _mm_xor_si128(X_xor, ((__m128i *) key2.KEY)[0]);
-  for (j = 1; j <= 2; j++) {
-    Y_xor = _mm_aesenc_si128(Y_xor, ((__m128i *) key2.KEY)[j]);
-  }
-
-  // Calculate tag
-  __m128i T;
-  T = _mm_xor_si128(S, delta3_l);
-  T = _mm_xor_si128(T, Y_xor);
-
-  _mm_storeu_si128 (&((__m128i*)TAG)[0],T);
 
   // Print encrypt part
   printf("The Cipher Key 1:\n");
@@ -335,103 +243,29 @@ int main() {
     print_m128i_with_string("", ((__m128i *) CIPHERTEXT)[i]);
   if (length_plaintext_in_bytes % 16)
     print_m128i_with_string_short("", ((__m128i *) CIPHERTEXT)[i], length_plaintext_in_bytes % 16);
-  printf("TAG:\n");
-  print_m128i_with_string("", ((__m128i *) TAG)[0]);
 
-  /* ------------------------------------ Decryption part ------------------------------------ */
-  /* ------------------------------------ Hashing ------------------------------------ */
-  // Assuming complete blocks only
-  complete_blocks = (length_associated_data_in_bytes - length_associated_data_in_bytes % 16) / 16;
-  ctr = 1;
-  S = _mm_set_epi32(0, 0, 0, 0);
-  for (indexBlock = 0; indexBlock < complete_blocks; indexBlock++) {
-    // Load A_i 16 * 16 bits of A
-    __m128i A_i, U_i, V_i;
-    A_i = _mm_loadu_si128(&((__m128i *) ASSOCIATEDDATA)[indexBlock]);
-    // Create alpha and delta5 with key 2
-    __m128i alpha, delta5;
-    alpha = _mm_set_epi32(ctr, ctr, ctr, ctr);
-    alpha = _mm_xor_si128(alpha, L);
-    // cipher alpha (2 rounds)
-    alpha = _mm_xor_si128(alpha, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      alpha = _mm_aesenc_si128(alpha, ((__m128i *) key2.KEY)[j]);
-    }
-    delta5 = alpha;
-    ctr += 5;
-
-    // Calculate U_i
-    U_i = _mm_xor_si128(A_i, delta5);
-
-    // Cipher U_i with two rounds AES. Calculate V_i
-    V_i = _mm_xor_si128(U_i, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      V_i = _mm_aesenc_si128(V_i, ((__m128i *) key2.KEY)[j]);
-    }
-
-    // Calculate S
-    S = _mm_xor_si128(S, V_i);
-  }
-
-  /* ------------------------------------ Decryption ------------------------------------ */
-  // Assuming complete blocks only
   complete_blocks = (length_plaintext_in_bytes - length_plaintext_in_bytes % 16) / 16;
-  ctr = 1;
-  M_xor = _mm_set_epi32(0, 0, 0, 0);
   for (indexBlock = 0; indexBlock < complete_blocks; indexBlock++) {
     // Load M_i 16 * 16 bits of M
-    __m128i M_i, X_i, Y_i, C_i;
+    __m128i M_i, C_i;
     C_i = _mm_loadu_si128(&((__m128i *) CIPHERTEXT)[indexBlock]);
-    // Create alpha and delta1_i with key 2
-    __m128i delta1;
-    alpha = _mm_set_epi32(ctr, ctr, ctr, ctr);
-    alpha = _mm_xor_si128(alpha, L);
-    // cipher alpha (2 rounds)
-    alpha = _mm_xor_si128(alpha, ((__m128i *) key2.KEY)[0]);
-    for (j = 1; j <= 2; j++) {
-      alpha = _mm_aesenc_si128(alpha, ((__m128i *) key2.KEY)[j]);
-    }
-    delta1 = alpha;
-    ctr++;
-
-    // Calculate Y_i
-    Y_i = _mm_xor_si128(C_i, delta1);
 
     // Decipher Y_i to X_i
-    X_i = _mm_xor_si128(Y_i, ((__m128i *) decrypt_key1.KEY)[0]);
+    M_i = _mm_xor_si128(C_i, ((__m128i *) decrypt_key1.KEY)[0]);
+    int j;
     for (j = 1; j < 10; j++) {
-      X_i = _mm_aesdec_si128(X_i, ((__m128i *) decrypt_key1.KEY)[j]);
+      M_i = _mm_aesdec_si128(M_i, ((__m128i *) decrypt_key1.KEY)[j]);
     }
-    X_i = _mm_aesdeclast_si128(X_i, ((__m128i *) decrypt_key1.KEY)[j]);
+    M_i = _mm_aesdeclast_si128(M_i, ((__m128i *) decrypt_key1.KEY)[j]);
 
-    // Calculate M_i
-    M_i = _mm_xor_si128(X_i, delta1);
     _mm_storeu_si128(&((__m128i*)DECRYPTEDTEXT)[indexBlock],M_i);
-
-    // Calculate M_xor
-    M_xor = _mm_xor_si128(M_xor, M_i);
   }
-
-  // Calculate X_xor
-  X_xor = _mm_xor_si128(M_xor, delta3_l);
-
-  // Calculate Y_xor ciphering X_xor (two rounds)
-  Y_xor = _mm_xor_si128(X_xor, ((__m128i *) key2.KEY)[0]);
-  for (j = 1; j <= 2; j++) {
-    Y_xor = _mm_aesenc_si128(Y_xor, ((__m128i *) key2.KEY)[j]);
-  }
-
-  // Calculate tag
-  T = _mm_xor_si128(S, delta3_l);
-  T = _mm_xor_si128(T, Y_xor);
-
-  _mm_storeu_si128 (&((__m128i*)TAG)[0],T);
 
   printf("\n\nThe DECIPHERTEXT:\n");
   for (i = 0; i < length_plaintext_in_bytes / 16; i++)
     print_m128i_with_string("", ((__m128i *) DECRYPTEDTEXT)[i]);
   if (length_plaintext_in_bytes % 16)
     print_m128i_with_string_short("", ((__m128i *) DECRYPTEDTEXT)[i], length_plaintext_in_bytes % 16);
-  printf("TAG:\n");
-  print_m128i_with_string("", ((__m128i *) TAG)[0]);
+
+  return 0;
 }
