@@ -1,0 +1,1 @@
+/usr/bin/cc -march=native CMakeFiles/OCB_AES_128.dir/main.c.o -o OCB_AES_128 

@@ -330,6 +330,11 @@ int main() {
     print_m128i_with_string("", ((__m128i *) PLAINTEXT)[i]);
   if (length_plaintext_in_bytes % 16)
     print_m128i_with_string_short("", ((__m128i *) PLAINTEXT)[i], length_plaintext_in_bytes % 16);
+  printf("The ASSOCIATEDDATA:\n");
+  for (i = 0; i < length_associated_data_in_bytes / 16; i++)
+    print_m128i_with_string("", ((__m128i *) ASSOCIATEDDATA)[i]);
+  if (length_associated_data_in_bytes % 16)
+    print_m128i_with_string_short("", ((__m128i *) ASSOCIATEDDATA)[i], length_associated_data_in_bytes % 16);
   printf("\n\nThe CIPHERTEXT:\n");
   for (i = 0; i < length_plaintext_in_bytes / 16; i++)
     print_m128i_with_string("", ((__m128i *) CIPHERTEXT)[i]);
