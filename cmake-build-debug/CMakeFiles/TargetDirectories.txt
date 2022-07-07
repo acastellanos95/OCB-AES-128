@@ -1,3 +1,0 @@
-/home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug/CMakeFiles/OCB_AES_128.dir
-/home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug/CMakeFiles/edit_cache.dir
-/home/andre/Documents/GitHub/OCB-AES-128/cmake-build-debug/CMakeFiles/rebuild_cache.dir
